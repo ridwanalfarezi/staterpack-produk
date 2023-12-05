@@ -1,7 +1,7 @@
 import { Axios } from "./Axios";
 import { camelizeKeys, decamelizeKeys } from "humps";
 
-export const API_URL = "https://sie-server.temancoding.com";
+export const API_URL = "http://localhost:3333";
 
 const client = (
   endpoint,
