@@ -1,19 +1,47 @@
+import { getAllProducts, deleteProduct } from "@/client/ProdukClient";
 import ModalProduk from "@/components/ModalProduk";
 import { Empty, Spin, Tooltip } from "antd";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FaPlus, FaPen, FaTrashAlt } from "react-icons/fa";
+import { confirmDelete } from "../utils/Swal";
+import Swal from "sweetalert2";
 
 export default function Home() {
   const [modalProduk, setModalProduk] = useState(false);
-  const [editData, setEditData] = useState(false);
+  const [editData, setEditData] = useState(null);
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  const dummyData = [
-    {
-      id: 1,
-      name: "Televisi",
-      price: 1000000,
-    },
-  ];
+  const _getAllProducts = async () => {
+    setLoading(true);
+    const { data } = await getAllProducts();
+    if (data) {
+      setProduct(data);
+    }
+    setLoading(false);
+  };
+
+  const handleEdit = (d) => {
+    setEditData(d);
+    setModalProduk(true);
+  };
+
+  const handleDelete = async (d) => {
+    const { data } = await deleteProduct(d);
+    if (data) {
+      _getAllProducts();
+      Swal.fire({
+        title: "Data berhasil dihapus",
+        icon: "success",
+        showConfirmButton: false,
+        timer: 1000,
+      });
+    }
+  };
+
+  useEffect(() => {
+    _getAllProducts();
+  }, []);
 
   return (
     <div className="container mt-5">
@@ -36,12 +64,8 @@ export default function Home() {
             </button>
           </div>
         </div>
-        <div className="mt-3 fs-14 text-neutral-90 fw-600 p-0">
-          Menampilkan <span className="fw-black text-neutral-100"></span> dari
-          total <span className="fw-black text-neutral-100">0</span>{" "}
-        </div>
         <div className=" mt-4">
-          <Spin spinning={false}>
+          <Spin spinning={loading}>
             <div
               className={`table-responsive bg-white`}
               style={{
@@ -109,9 +133,9 @@ export default function Home() {
                   padding: "0",
                 }}
               >
-                {dummyData.length ? (
+                {product?.length > 0 ? (
                   <tbody>
-                    {dummyData.map((d, idx) => (
+                    {product.map((d, idx) => (
                       <tr
                         key={d.id}
                         style={{
@@ -129,9 +153,9 @@ export default function Home() {
                         </td>
                         <td data-th="Nama Produk" style={{ width: "40%" }}>
                           <div className="d-flex flex-column">
-                            <Tooltip title={d.name}>
+                            <Tooltip title={d.nama}>
                               <span className="fs-14 text-neutral-100 clamp-1 ms-4 ms-lg-0">
-                                {d.name || "-"}
+                                {d.nama || "-"}
                               </span>
                             </Tooltip>
                           </div>
@@ -141,7 +165,7 @@ export default function Home() {
                           className="td-auto"
                           style={{ width: "40%", overflow: "auto" }}
                         >
-                          <div>{d.price}</div>
+                          <div>{d.harga}</div>
                         </td>
                         <td
                           data-th="Aksi"
@@ -149,10 +173,18 @@ export default function Home() {
                           className="text-md-center text-left"
                         >
                           <div className="d-flex justify-content-md-center justify-content-start align-items-center flex-row gap-3">
-                            <button className="d-flex align-items-center justify-content-center btn-icon btn-outline-primary">
+                            <button
+                              className="d-flex align-items-center justify-content-center btn-icon btn-outline-primary"
+                              onClick={() => handleEdit(d)}
+                            >
                               <FaPen size={16} />
                             </button>
-                            <button className="d-flex align-items-center justify-content-center btn-icon btn-outline-danger">
+                            <button
+                              className="d-flex align-items-center justify-content-center btn-icon btn-outline-danger"
+                              onClick={() =>
+                                confirmDelete(() => handleDelete(d?.id))
+                              }
+                            >
                               <FaTrashAlt size={16} />
                             </button>
                           </div>
@@ -179,6 +211,7 @@ export default function Home() {
         setModalProduk={setModalProduk}
         editData={editData}
         setEditData={setEditData}
+        _getProducts={_getAllProducts}
       />
     </div>
   );
